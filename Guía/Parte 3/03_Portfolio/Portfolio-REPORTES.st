@@ -444,6 +444,166 @@ test10TransferNetSumsAllTransferences
 	
 	self assert: transferNet equals:(-150).! !
 
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 17:42:17'!
+test11ReportsWorkRecursivelyInPortfolio
+	|transferNet accountSummary firstAccount secondAccount firstPortfolio secondPortfolio thirdAccount|
+	
+	firstAccount:=ReceptiveAccount new.
+	secondAccount:=ReceptiveAccount new.
+	thirdAccount:=ReceptiveAccount new.
+
+	
+	firstPortfolio := Portfolio new.
+	secondPortfolio := Portfolio new.
+	
+	firstPortfolio add:firstAccount.
+	secondPortfolio add:secondAccount.
+	
+	firstPortfolio add:secondPortfolio.
+	
+	Transference register: 100 from: firstAccount to: thirdAccount.
+	Transference register: 50 from: thirdAccount to: secondAccount.
+	Deposit register: 1000 on: firstAccount.
+	
+	"transferNet:= firstAccount transferNet."
+	transferNet:= (TransactionsVisitatorTransferNet visitatorOf: firstPortfolio) report.
+	accountSummary:= (TransactionsVisitatorAccountSummary visitatorOf: firstPortfolio) report.
+	
+	self assert: transferNet equals:(-50).
+	
+	self assert: accountSummary size equals: 4.
+	self assert: accountSummary includes:'Depósito por 1000'.
+	self assert: accountSummary includes: 'Salida por transferencia de 100'.
+	self assert: accountSummary includes: 'Entrada por transferencia de 50'.
+	self assert: accountSummary includes: 'Balance = 950'.! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 19:15:27'!
+test12TreeStructureOfEmptyPortfolio
+	|firstPortfolio treeStructure|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	self assert: treeStructure includes: 'Portfolio Padre'.! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 20:24:42'!
+test12TreeTransactionsOfEmptyPortfolio
+	|firstPortfolio treeStructure|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	self assert: treeStructure includes: 'Portfolio Padre'.! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 19:20:57'!
+test13TreeStructureOfPortfolioWithOneReceptiveAccount
+	|firstPortfolio firstAccount treeStructure primerNivel|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	firstAccount := ReceptiveAccount named:'Cuenta Uno'.
+	
+	firstPortfolio add: firstAccount .
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	primerNivel := OrderedCollection new.
+	primerNivel add:'Cuenta Uno'.
+	
+	self assert: treeStructure size equals: 2.
+	self assert: treeStructure includes: 'Portfolio Padre'.
+	self assert: treeStructure includes: primerNivel .! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 19:37:17'!
+test14TreeStructureOfPortfolioWithManyReceptiveAccount
+	|firstPortfolio firstAccount secondAccount treeStructure primerNivel|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	firstAccount := ReceptiveAccount named:'Cuenta Uno'.
+	secondAccount := ReceptiveAccount named:'Cuenta Dos'.
+	
+	firstPortfolio add: firstAccount .
+	firstPortfolio add:secondAccount .
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	primerNivel := OrderedCollection new.
+	primerNivel add:'Cuenta Uno'.
+	primerNivel add:'Cuenta Dos'.
+	
+	self assert: treeStructure size equals: 2.
+	self assert: treeStructure includes: 'Portfolio Padre'.
+	self assert: treeStructure includes: primerNivel .! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 19:39:48'!
+test15TreeStructureOfPortfolioWithOnePortfolio
+	|firstPortfolio secondPortfolio treeStructure primerNivel|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	secondPortfolio:=Portfolio named:'Portfolio Hijo'.
+	
+	firstPortfolio add: secondPortfolio .
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	primerNivel := OrderedCollection new.
+	primerNivel add: 'Portfolio Hijo'.
+	primerNivel add: (OrderedCollection new).
+	
+	self assert: treeStructure includes: 'Portfolio Padre'.
+	self assert: treeStructure includes: primerNivel .! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 20:02:56'!
+test16TreeStructureOfPortfolioComposed
+	|firstPortfolio firstLevelAccount secondPortfolio secondLevelAccount thirdPortfolio treeStructure primerNivel segundoNivel tercerNivel|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	secondPortfolio:=Portfolio named:'Portfolio Hijo'.
+	thirdPortfolio:=Portfolio named:'Portfolio Nieto'.
+	
+	firstLevelAccount:= ReceptiveAccount named: 'Cuenta Uno'.
+	secondLevelAccount:= ReceptiveAccount named: 'Cuenta Dos'.
+	
+	firstPortfolio add: firstLevelAccount.
+	firstPortfolio add: secondPortfolio .
+	secondPortfolio add:secondLevelAccount .
+	secondPortfolio add:thirdPortfolio .
+	
+	treeStructure := (AccountVisitatorTreeStructure visitatorOf: firstPortfolio) report.
+	
+	primerNivel := OrderedCollection new.
+	primerNivel add: 'Cuenta Uno'.
+	primerNivel add: 'Portfolio Hijo'.
+	
+	segundoNivel:= OrderedCollection new.
+	segundoNivel add: 'Cuenta Dos'.
+	segundoNivel add: 'Portfolio Nieto'.
+	
+	tercerNivel:= OrderedCollection new.
+	
+	
+	segundoNivel add:tercerNivel .
+	primerNivel add:segundoNivel .
+	
+	self assert: treeStructure size equals:2.
+	self assert: treeStructure includes: 'Portfolio Padre'.
+	self assert: treeStructure includes: primerNivel .! !
+
+!ReportsTest methodsFor: 'tests' stamp: 'MAM 10/31/2024 20:28:45'!
+test17TreeTransactionsOfEmptyPortfolio
+	|firstPortfolio treeTransactions primerNivel|
+	
+	firstPortfolio := Portfolio named: 'Portfolio Padre'.
+	
+	treeTransactions := (AccountVisitatorTreeTransactions visitatorOf: firstPortfolio) report.
+	
+	primerNivel:= OrderedCollection new.
+	primerNivel add: 'Balance = 0'.
+	
+	self assert: treeTransactions includes: 'Portfolio Padre'.
+	self assert: treeTransactions includes: primerNivel .! !
+
 
 !classDefinition: #TransferenceTest category: 'Portfolio-REPORTES'!
 TestCase subclass: #TransferenceTest
@@ -521,7 +681,7 @@ test05ValueMustBeKeptInOnePlaceOnly
 
 !classDefinition: #Account category: 'Portfolio-REPORTES'!
 Object subclass: #Account
-	instanceVariableNames: ''
+	instanceVariableNames: 'name'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Portfolio-REPORTES'!
@@ -558,6 +718,25 @@ transactions
 addedTo: aPortfolio
 
 	self subclassResponsibility ! !
+
+
+!Account methodsFor: 'name' stamp: 'MAM 10/31/2024 18:08:52'!
+name
+	^name.! !
+
+!Account methodsFor: 'name' stamp: 'MAM 10/31/2024 18:08:34'!
+name: aNameOfTheAccount
+	name:= aNameOfTheAccount .! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'Account class' category: 'Portfolio-REPORTES'!
+Account class
+	instanceVariableNames: ''!
+
+!Account class methodsFor: 'as yet unclassified' stamp: 'MAM 10/31/2024 18:08:18'!
+named: aNameOfTheAccount
+	^self new name: aNameOfTheAccount .! !
 
 
 !classDefinition: #Portfolio category: 'Portfolio-REPORTES'!
@@ -671,6 +850,16 @@ signalCanNotAddAccount
 	
 	self error: self class canNotAddAccountErrorMessage! !
 
+
+!Portfolio methodsFor: 'reports' stamp: 'MAM 10/31/2024 19:25:50'!
+reportAccountOn: anAccountVisitatorTreeStructure 
+	anAccountVisitatorTreeStructure reportPortfolio: self.
+	accounts do:[:anAccount| anAccount reportAccountOn: anAccountVisitatorTreeStructure ].! !
+
+!Portfolio methodsFor: 'reports' stamp: 'MAM 10/31/2024 17:37:25'!
+reportTransactionsOn: aTransactionsVisitor
+	self transactions do:[:aTransaction | aTransaction reportOn: aTransactionsVisitor.]! !
+
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 !classDefinition: 'Portfolio class' category: 'Portfolio-REPORTES'!
@@ -769,6 +958,10 @@ accountSummary
 	accountSummary add:'Balance = ', self balance asString.
 	
 	^accountSummary ! !
+
+!ReceptiveAccount methodsFor: 'reports' stamp: 'MAM 10/31/2024 19:26:31'!
+reportAccountOn: anAccountVisitatorTreeStructure 
+	anAccountVisitatorTreeStructure reportReceptiveAccount: self.! !
 
 !ReceptiveAccount methodsFor: 'reports' stamp: 'MAM 10/30/2024 23:17:31'!
 reportTransactionsOn: aVisitor
@@ -998,6 +1191,118 @@ Withdraw class
 for: aValue
 
 	^ self new initializeFor: aValue ! !
+
+
+!classDefinition: #AccountVisitator category: 'Portfolio-REPORTES'!
+Object subclass: #AccountVisitator
+	instanceVariableNames: 'portfolio'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Portfolio-REPORTES'!
+
+!AccountVisitator methodsFor: 'initialization' stamp: 'MAM 10/31/2024 20:08:20'!
+initializeWith: aPortfolio
+	portfolio:= aPortfolio .! !
+
+
+!AccountVisitator methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:09:18'!
+report
+	portfolio reportAccountOn: self.! !
+
+!AccountVisitator methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:10:17'!
+reportPortfolio: aPortfolio
+	self subclassResponsibility ! !
+
+!AccountVisitator methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:10:32'!
+reportReceptiveAccount: aReceptiveAccount
+	self subclassResponsibility ! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'AccountVisitator class' category: 'Portfolio-REPORTES'!
+AccountVisitator class
+	instanceVariableNames: ''!
+
+!AccountVisitator class methodsFor: 'instance creation' stamp: 'MAM 10/31/2024 20:13:08'!
+visitatorOf: anAccount
+	(anAccount isKindOf: Portfolio) ifFalse:[self error: 'Solo puede generarse la estructura de árbol de un Portfolio'].
+	^self new initializeWith: anAccount.! !
+
+
+!classDefinition: #AccountVisitatorTreeStructure category: 'Portfolio-REPORTES'!
+AccountVisitator subclass: #AccountVisitatorTreeStructure
+	instanceVariableNames: 'treeStructure currentPortfolio'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Portfolio-REPORTES'!
+
+!AccountVisitatorTreeStructure methodsFor: 'initialization' stamp: 'MAM 10/31/2024 20:08:39'!
+initializeWith: aPortfolio
+	super initializeWith: aPortfolio .
+	treeStructure:=OrderedCollection new.
+	currentPortfolio := treeStructure .! !
+
+
+!AccountVisitatorTreeStructure methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:09:32'!
+report
+	super report.
+	^treeStructure .! !
+
+!AccountVisitatorTreeStructure methodsFor: 'reports' stamp: 'MAM 10/31/2024 19:42:34'!
+reportPortfolio: aPortfolio
+	|newPortfolio|
+	
+	currentPortfolio add: aPortfolio name.
+	newPortfolio := OrderedCollection new.
+	currentPortfolio add:newPortfolio .
+	
+	currentPortfolio := newPortfolio .! !
+
+!AccountVisitatorTreeStructure methodsFor: 'reports' stamp: 'MAM 10/31/2024 19:34:44'!
+reportReceptiveAccount: aReceptiveAccount 
+	currentPortfolio add: aReceptiveAccount name.! !
+
+
+!classDefinition: #AccountVisitatorTreeTransactions category: 'Portfolio-REPORTES'!
+AccountVisitator subclass: #AccountVisitatorTreeTransactions
+	instanceVariableNames: 'treeTransactions currentAccount'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Portfolio-REPORTES'!
+
+!AccountVisitatorTreeTransactions methodsFor: 'initialization' stamp: 'MAM 10/31/2024 20:21:25'!
+initializeWith: aPortfolio
+	super initializeWith: aPortfolio.
+	treeTransactions:=OrderedCollection new.
+	currentAccount := treeTransactions .! !
+
+
+!AccountVisitatorTreeTransactions methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:20:58'!
+report
+	super report.
+	^treeTransactions .! !
+
+!AccountVisitatorTreeTransactions methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:30:32'!
+reportPortfolio: aPortfolio
+	|newPortfolio|
+	
+	currentAccount add: aPortfolio name.
+	newPortfolio := OrderedCollection new.
+	currentAccount add:newPortfolio .
+	
+	currentAccount := newPortfolio .
+	
+	currentAccount add: 'Balance = 0'! !
+
+!AccountVisitatorTreeTransactions methodsFor: 'reports' stamp: 'MAM 10/31/2024 20:34:20'!
+reportReceptiveAccount: aReceptiveAccount
+	|newReceptiveAccount|
+	
+	currentAccount add: aReceptiveAccount name.
+	
+	currentAccount add: aReceptiveAccount name.
+	newReceptiveAccount := (TransactionsVisitatorAccountSummary visitatorOf: aReceptiveAccount) report.
+	currentAccount add:newReceptiveAccount .! !
 
 
 !classDefinition: #TransactionsVisitator category: 'Portfolio-REPORTES'!
